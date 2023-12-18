@@ -47,17 +47,13 @@ def make_moving_collate_fn(device):
 # > max function). The output layer objective for all algorithms
 # > was to minimize the categorical negative log likelihood.
 
-def train_mnist(num_epochs=10, batch_size=32, init_lr=0.01, max_lr=0.5, momentum=0.9):
+def train_mnist(num_epochs=10, batch_size=32, lr=0.01, momentum=0.0, perform_validation=False):
     set_random_seed(6283185)
 
-    num_epochs = 20
-    batch_size = 25
     input_size = 28*28
     hidden_size = 256
-    num_hiddens = 2
+    num_hiddens = 3
     output_size = 10
-
-    perform_validation = False
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {device}')
@@ -73,18 +69,19 @@ def train_mnist(num_epochs=10, batch_size=32, init_lr=0.01, max_lr=0.5, momentum
 
     data_test = torchvision.datasets.MNIST(root='data', train=False, download=True, transform=transforms)
 
-    # train_loader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, collate_fn=moving_collate)
+    train_loader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, collate_fn=moving_collate)
     valid_loader = torch.utils.data.DataLoader(data_valid, batch_size=batch_size, collate_fn=moving_collate)
 
-    data_train_subset = torch.utils.data.Subset(data_train, range(64))
-    train_loader = torch.utils.data.DataLoader(data_train_subset, batch_size=batch_size, shuffle=True, collate_fn=moving_collate)
+    # subset for debugging
+    # data_train_subset = torch.utils.data.Subset(data_train, range(256))
+    # train_loader = torch.utils.data.DataLoader(data_train_subset, batch_size=batch_size, shuffle=True, collate_fn=moving_collate)
 
     model = LRAENetwork(input_size, output_size, num_hiddens, hidden_size)
     model.to(device)
 
     print("Trainable parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=init_lr, momentum=momentum)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
     # oc_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=max_lr, steps_per_epoch=len(train_loader), epochs=num_epochs)
 
     print(f'Train examples: {len(data_train)}')
@@ -128,6 +125,5 @@ def train_mnist(num_epochs=10, batch_size=32, init_lr=0.01, max_lr=0.5, momentum
             calc_validation_accuracy()
 
 
-
 if __name__ == '__main__':
-    train_mnist(num_epochs=10, init_lr = 0.01, max_lr=0.5)
+    train_mnist(num_epochs=100, lr = 0.01, batch_size = 50, perform_validation=True)
