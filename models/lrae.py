@@ -93,19 +93,19 @@ class LRAENetwork(nn.Module):
     # > β, is then subtracted from the initially found pre-activation
     # > of the layer below h^{l−1}
     def compute_targets(self, Y):
-        # print('####################### COMPUTE_TARGETS #######################')
-        # print(Y.shape)
-        # print(Y[0])
-        # division-by-zero-be-gone
-        out_err_eps = 1e-12
         L = self.num_hiddens + 1
         self.E = [None for _ in range(L)]
-        self.E[-1] = -Y / (self.Z[-1] + out_err_eps)
+
+        # division-by-zero-be-gone
+        # out_err_eps = 1e-12
+        # self.E[-1] = -Y / (self.Z[-1] + out_err_eps)
+        self.E[-1] = self.Z[-1] - Y
+
         # calculate targets y^k for k = L-1, ..., 1
         for k in reversed(range(L-1)):
             # U[k] instead of U[k+1] because we don't pad self.U (U^1 doesnt exist)
             Y_lower = self.phi(self.A[k] - self.beta * self.E[k+1] @ self.U[k])
-            self.E[k] = 2 * (self.Z[k] - Y_lower)
+            self.E[k] = self.Z[k] - Y_lower
 
 
     # update W and E (and bW and bE)
@@ -121,14 +121,14 @@ class LRAENetwork(nn.Module):
         # since we store weight matrices transposed w.r.t. the paper, the update rules
         # are also transposed
 
-        self.W[0].grad = (1. / m) * X.T @ self.E[0]
-        self.W[1].grad = (1. / m) * self.Z[0].T @ self.E[1]
-        self.W[2].grad = (1. / m) * self.Z[1].T @ self.E[2]
-        self.W[3].grad = (1. / m) * self.Z[2].T @ self.E[3]
+        self.W[0].grad = X.T @ self.E[0]
+        self.W[1].grad = self.Z[0].T @ self.E[1]
+        self.W[2].grad = self.Z[1].T @ self.E[2]
+        self.W[3].grad = self.Z[2].T @ self.E[3]
 
-        self.U[0].grad = -self.gamma * self.W[1].T
-        self.U[1].grad = -self.gamma * self.W[2].T
-        self.U[2].grad = -self.gamma * self.W[3].T
+        self.U[0].grad = self.gamma * self.W[1].T
+        self.U[1].grad = self.gamma * self.W[2].T
+        self.U[2].grad = self.gamma * self.W[3].T
 
         # grad_W = [x.T @ self.E[0], self.Z[0].T @ self.E[1], self.Z[1].T @ self.E[2]]
         # grad_E = [-self.gamma * grad_W[1].T, -self.gamma * grad_W[2].T]

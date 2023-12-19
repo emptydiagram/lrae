@@ -71,7 +71,7 @@ def train_mnist(num_epochs=10, batch_size=32, lr=0.01, momentum=0.0, perform_val
     data_test = torchvision.datasets.MNIST(root='data', train=False, download=True, transform=transforms)
 
     train_loader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, collate_fn=moving_collate)
-    valid_loader = torch.utils.data.DataLoader(data_valid, batch_size=batch_size, collate_fn=moving_collate)
+    valid_loader = torch.utils.data.DataLoader(data_valid, batch_size=valid_size, collate_fn=moving_collate)
 
     # subset for debugging
     # data_train_subset = torch.utils.data.Subset(data_train, range(256))
