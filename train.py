@@ -60,7 +60,8 @@ def train_mnist(num_epochs=10, batch_size=32, lr=0.01, momentum=0.0, perform_val
 
     # Load dataset
     moving_collate = make_moving_collate_fn(device)
-    transforms = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), torchvision.transforms.Normalize((0.13066,), (0.30811,))])
+    # They don't normalize LRA-E to zero mean and unit variance, just normalize to [0, 1]
+    transforms = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
 
     data_train_full = torchvision.datasets.MNIST(root='data', train=True, download=True, transform=transforms)
     train_size = int(0.8 * len(data_train_full))
@@ -91,13 +92,14 @@ def train_mnist(num_epochs=10, batch_size=32, lr=0.01, momentum=0.0, perform_val
         with torch.no_grad():
             model.eval()
             valid_correct = 0
-            for x_mb, y_mb in valid_loader:
-                x_mb = x_mb.view(x_mb.size(0), -1)
-                logits = model(x_mb)
-                valid_correct += torch.sum(torch.argmax(logits, dim=1) == y_mb)
+            for X, Y in valid_loader:
+                X = X.view(X.size(0), -1)
+                logits = model(X)
+                valid_correct += torch.sum(torch.argmax(logits, dim=1) == Y)
             valid_acc = valid_correct / len(data_valid)
             print(f'Validation accuracy: {valid_acc}')
             model.train()
+
 
     # pre-training accuracy
     if perform_validation:
@@ -126,4 +128,4 @@ def train_mnist(num_epochs=10, batch_size=32, lr=0.01, momentum=0.0, perform_val
 
 
 if __name__ == '__main__':
-    train_mnist(num_epochs=100, lr = 0.01, batch_size = 50, perform_validation=True)
+    train_mnist(num_epochs=100, lr = 0.0005, batch_size = 50, perform_validation=True)

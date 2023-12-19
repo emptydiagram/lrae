@@ -124,9 +124,11 @@ class LRAENetwork(nn.Module):
         self.W[0].grad = (1. / m) * X.T @ self.E[0]
         self.W[1].grad = (1. / m) * self.Z[0].T @ self.E[1]
         self.W[2].grad = (1. / m) * self.Z[1].T @ self.E[2]
+        self.W[3].grad = (1. / m) * self.Z[2].T @ self.E[3]
 
         self.U[0].grad = -self.gamma * self.W[1].T
         self.U[1].grad = -self.gamma * self.W[2].T
+        self.U[2].grad = -self.gamma * self.W[3].T
 
         # grad_W = [x.T @ self.E[0], self.Z[0].T @ self.E[1], self.Z[1].T @ self.E[2]]
         # grad_E = [-self.gamma * grad_W[1].T, -self.gamma * grad_W[2].T]
